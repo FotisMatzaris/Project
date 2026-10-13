@@ -11,6 +11,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -21,6 +32,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowReactApp");
 
 var summaries = new[]
 {
@@ -41,6 +54,18 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+app.MapGet("/api/fields", (Backend.Data.AppDbContext db) =>
+{
+    return db.Fields.ToList();
+});
+
+app.MapPost("/api/fields", (Backend.Data.AppDbContext db, Backend.Models.Field field) =>
+{
+    db.Fields.Add(field);
+    db.SaveChanges();
+    return Results.Ok(field);
+});
 
 app.Run();
 
