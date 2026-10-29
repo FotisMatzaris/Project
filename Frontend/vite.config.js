@@ -4,4 +4,14 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    port: 5173,
+    // Οι κλήσεις προς /api προωθούνται στο backend, χωρίς προβλήματα CORS/https.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5008',
+        changeOrigin: true,
+      },
+    },
+  },
 })

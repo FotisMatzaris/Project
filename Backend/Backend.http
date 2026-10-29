@@ -1,6 +1,20 @@
 @Backend_HostAddress = http://localhost:5008
 
-GET {{Backend_HostAddress}}/weatherforecast/
+### Λίστα χωραφιών
+GET {{Backend_HostAddress}}/api/fields
 Accept: application/json
 
-###
+### Νέο χωράφι
+POST {{Backend_HostAddress}}/api/fields
+Content-Type: application/json
+
+{ "name": "Χωράφι Νάουσα", "cropType": "Ροδάκινα", "sizeInStremmata": 12.5 }
+
+### Ενημέρωση χωραφιού
+PUT {{Backend_HostAddress}}/api/fields/1
+Content-Type: application/json
+
+{ "name": "Χωράφι Νάουσα", "cropType": "Ακτινίδια", "sizeInStremmata": 15 }
+
+### Διαγραφή χωραφιού
+DELETE {{Backend_HostAddress}}/api/fields/1

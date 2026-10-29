@@ -4,3 +4,9 @@ __pycache__/
 .env
 bin/
 obj/
+
+# .NET / IDE
+.vs/
+*.user
+*.suo
+Frontend/dist/
