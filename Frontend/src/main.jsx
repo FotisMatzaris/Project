@@ -1,23 +1,11 @@
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import Landing from './Landing.jsx'
-
-function Root() {
-  const [hash, setHash] = useState(window.location.hash)
-
-  useEffect(() => {
-    const onChange = () => setHash(window.location.hash)
-    window.addEventListener('hashchange', onChange)
-    return () => window.removeEventListener('hashchange', onChange)
-  }, [])
-
-  return hash === '' || hash === '#' ? <Landing /> : <App />
-}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Root />
+    <App />
   </StrictMode>,
 )
+
