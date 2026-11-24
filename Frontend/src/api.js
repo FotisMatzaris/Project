@@ -1,4 +1,11 @@
-const BASE = '/api/fields'
+const FIELDS = '/api/fields'
+const AUTH = '/api/auth'
+
+// Τι θα γίνει όταν λήξει η σύνδεση όσο ο χρήστης είναι μέσα. Το ορίζει το AuthGate.
+let onUnauthorized = () => {}
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler
+}
 
 async function request(url, options) {
   let response
@@ -21,17 +28,43 @@ async function request(url, options) {
   }
 
   if (!response.ok) {
-    if (data?.errors) {
-      throw new Error(Object.values(data.errors).flat().join(' '))
-    }
-    throw new Error(`Το αίτημα απέτυχε (${response.status}).`)
+    const error = new Error(messageFor(response.status, data))
+    error.status = response.status
+    error.fields = data?.errors ?? {}
+    if (response.status === 401 && !url.startsWith(AUTH)) onUnauthorized()
+    throw error
   }
   return data
 }
 
-export const getFields = () => request(BASE)
-export const createField = (field) =>
-  request(BASE, { method: 'POST', body: JSON.stringify(field) })
+function messageFor(status, data) {
+  if (data?.errors) return Object.values(data.errors).flat().join(' ')
+  if (status === 401) return 'Η σύνδεσή σου έληξε. Συνδέσου ξανά.'
+  if (status === 429) return 'Πολλές προσπάθειες. Περίμενε ένα λεπτό και δοκίμασε ξανά.'
+  if (status >= 500) return 'Ο διακομιστής δεν απαντά. Τρέχει το backend;'
+  return `Το αίτημα απέτυχε (${status}).`
+}
+
+const post = (url, body) =>
+  request(url, { method: 'POST', body: body && JSON.stringify(body) })
+
+// Λογαριασμοί
+export async function getMe() {
+  try {
+    return await request(`${AUTH}/me`)
+  } catch (e) {
+    if (e.status === 401) return null // απλώς δεν έχει συνδεθεί
+    throw e
+  }
+}
+export const checkEmail = (email) => post(`${AUTH}/check`, { email })
+export const register = (input) => post(`${AUTH}/register`, input)
+export const login = (input) => post(`${AUTH}/login`, input)
+export const logout = () => post(`${AUTH}/logout`)
+
+// Χωράφια
+export const getFields = () => request(FIELDS)
+export const createField = (field) => post(FIELDS, field)
 export const updateField = (id, field) =>
-  request(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(field) })
-export const deleteField = (id) => request(`${BASE}/${id}`, { method: 'DELETE' })
+  request(`${FIELDS}/${id}`, { method: 'PUT', body: JSON.stringify(field) })
+export const deleteField = (id) => request(`${FIELDS}/${id}`, { method: 'DELETE' })

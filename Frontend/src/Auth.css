@@ -1,0 +1,245 @@
+/* Κάρτα σύνδεσης: πάντα ανοιχτόχρωμη, όπως το landing. */
+.auth {
+  --auth-green: oklch(45% 0.13 150);
+  --auth-green-dark: oklch(39% 0.11 150);
+  --auth-text: oklch(22% 0.02 240);
+  --auth-muted: oklch(43% 0.018 240);
+  --auth-border: oklch(90% 0.008 240);
+  --auth-red: oklch(46% 0.16 28);
+  color-scheme: light;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: #fff;
+  color: var(--auth-text);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 456px;
+  padding: 40px;
+  border: 1px solid var(--auth-border);
+  border-radius: 16px;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  margin: 0 auto 24px;
+  color: oklch(27% 0.05 152);
+  font-size: 28px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-brand span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--auth-green);
+  color: #fff;
+}
+
+.auth-brand svg {
+  width: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.auth-sub {
+  margin: 0 0 24px;
+  color: var(--auth-muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.auth-alert {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--auth-red);
+  border-radius: 10px;
+  color: var(--auth-red);
+  font-size: 15px;
+}
+
+.auth-field {
+  margin-top: 16px;
+}
+
+.auth-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.auth-field input {
+  width: 100%;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid oklch(62% 0.015 240);
+  border-radius: 10px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.auth-field input[aria-invalid='true'] {
+  border-color: var(--auth-red);
+}
+
+.auth-password {
+  position: relative;
+}
+
+.auth-password input {
+  padding-right: 104px;
+}
+
+.auth-hint,
+.auth-error {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.auth-hint {
+  color: var(--auth-muted);
+}
+
+.auth-error {
+  color: var(--auth-red);
+}
+
+.auth-error:empty {
+  display: none;
+}
+
+.auth-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.auth-check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--auth-green);
+}
+
+.auth button.auth-submit {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--auth-green);
+  color: #fff;
+  font-weight: 600;
+}
+
+.auth button.auth-submit:hover:not(:disabled) {
+  background: var(--auth-green-dark);
+}
+
+.auth button.auth-eye,
+.auth button.auth-back {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--auth-green-dark);
+  font-weight: 600;
+}
+
+.auth button.auth-eye {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.auth button.auth-back {
+  display: block;
+  margin: 12px auto 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth button.auth-eye:hover:not(:disabled),
+.auth button.auth-back:hover:not(:disabled) {
+  background: none;
+  color: var(--auth-text);
+}
+
+.auth :focus-visible {
+  outline: 3px solid oklch(58% 0.16 145);
+  outline-offset: 2px;
+}
+
+/* Πάνω μπάρα της εφαρμογής */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.topbar-brand {
+  font-size: 1.15rem;
+}
+
+.topbar-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-alert {
+  max-width: 768px;
+  margin: 16px auto 0;
+}
+
+.gate-message {
+  padding: 48px 16px;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .auth {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .auth-card {
+    padding: 28px 20px;
+  }
+}
