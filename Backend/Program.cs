@@ -1,6 +1,8 @@
+using System.Threading.RateLimiting;
 using Backend.Data;
 using Backend.Endpoints;
 using Backend.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,13 +21,60 @@ builder.Services
     .AddIdentityCore<AppUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
+        // Το UserName είναι το email, οπότε επιτρέπουμε κάθε χαρακτήρα που έχει ένα email.
+        options.User.AllowedUserNameCharacters = "";
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = false;
         options.Password.RequireLowercase = false;
         options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;
+        // Μετά από 5 λάθος κωδικούς, ο λογαριασμός κλειδώνει για 5 λεπτά.
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
+    .AddSignInManager()
     .AddEntityFrameworkStores<AppDbContext>();
+
+// Η σύνδεση κρατιέται σε cookie που δεν το διαβάζει η JavaScript (HttpOnly).
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+builder.Services.AddAuthorization();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "agrilog_auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
+
+    // Είμαστε API: απαντάμε 401/403 αντί να στέλνουμε σε σελίδα σύνδεσης.
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
+
+// Όριο: 20 προσπάθειες το λεπτό ανά διεύθυνση IP στα endpoints των λογαριασμών.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1)
+        }));
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -60,7 +109,11 @@ else
 }
 
 app.UseCors("AllowReactApp");
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 
+app.MapAuthEndpoints();
 app.MapFieldEndpoints();
 
 app.Run();
