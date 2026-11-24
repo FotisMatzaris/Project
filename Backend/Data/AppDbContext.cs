@@ -1,12 +1,22 @@
+using Backend.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityUserContext<AppUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
-    public DbSet<Backend.Models.Field> Fields { get; set; }
-}
 
+    public DbSet<Field> Fields { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        // Απαραίτητο: εδώ το Identity ορίζει τους δικούς του πίνακες.
+        base.OnModelCreating(builder);
+
+        builder.Entity<AppUser>().Property(u => u.FullName).HasMaxLength(100);
+    }
+}
