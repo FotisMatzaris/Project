@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Backend.Data;
 using Backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -10,21 +11,29 @@ public static class FieldEndpoints
 
     public static IEndpointRouteBuilder MapFieldEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/fields").WithTags("Fields");
+        var group = app.MapGroup("/api/fields").WithTags("Fields").RequireAuthorization();
 
-        // Λίστα όλων των χωραφιών
-        group.MapGet("/", async (AppDbContext db) =>
-            Results.Ok(await db.Fields.AsNoTracking().OrderBy(f => f.Id).ToListAsync()));
+        // Λίστα των χωραφιών του συνδεδεμένου χρήστη
+        group.MapGet("/", async (ClaimsPrincipal user, AppDbContext db) =>
+        {
+            var userId = GetUserId(user);
+            return Results.Ok(await db.Fields.AsNoTracking()
+                .Where(f => f.UserId == userId)
+                .OrderBy(f => f.Id)
+                .ToListAsync());
+        });
 
         // Ένα χωράφι
-        group.MapGet("/{id:int}", async (int id, AppDbContext db) =>
+        group.MapGet("/{id:int}", async (int id, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var field = await db.Fields.AsNoTracking().FirstOrDefaultAsync(f => f.Id == id);
+            var userId = GetUserId(user);
+            var field = await db.Fields.AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
             return field is null ? Results.NotFound() : Results.Ok(field);
         });
 
         // Δημιουργία
-        group.MapPost("/", async (FieldInput input, AppDbContext db) =>
+        group.MapPost("/", async (FieldInput input, ClaimsPrincipal user, AppDbContext db) =>
         {
             var errors = Validate(input);
             if (errors.Count > 0) return Results.ValidationProblem(errors);
@@ -33,7 +42,8 @@ public static class FieldEndpoints
             {
                 Name = input.Name!.Trim(),
                 CropType = input.CropType!.Trim(),
-                SizeInStremmata = input.SizeInStremmata
+                SizeInStremmata = input.SizeInStremmata,
+                UserId = GetUserId(user)
             };
 
             db.Fields.Add(field);
@@ -42,12 +52,13 @@ public static class FieldEndpoints
         });
 
         // Ενημέρωση
-        group.MapPut("/{id:int}", async (int id, FieldInput input, AppDbContext db) =>
+        group.MapPut("/{id:int}", async (int id, FieldInput input, ClaimsPrincipal user, AppDbContext db) =>
         {
             var errors = Validate(input);
             if (errors.Count > 0) return Results.ValidationProblem(errors);
 
-            var field = await db.Fields.FindAsync(id);
+            var userId = GetUserId(user);
+            var field = await db.Fields.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
             if (field is null) return Results.NotFound();
 
             field.Name = input.Name!.Trim();
@@ -59,9 +70,10 @@ public static class FieldEndpoints
         });
 
         // Διαγραφή
-        group.MapDelete("/{id:int}", async (int id, AppDbContext db) =>
+        group.MapDelete("/{id:int}", async (int id, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var field = await db.Fields.FindAsync(id);
+            var userId = GetUserId(user);
+            var field = await db.Fields.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
             if (field is null) return Results.NotFound();
 
             db.Fields.Remove(field);
@@ -71,6 +83,11 @@ public static class FieldEndpoints
 
         return app;
     }
+
+    // Το id έρχεται από το cookie σύνδεσης, ποτέ από τα δεδομένα που στέλνει ο client.
+    private static string GetUserId(ClaimsPrincipal user) =>
+        user.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException("Λείπει το id του χρήστη.");
 
     private static Dictionary<string, string[]> Validate(FieldInput input)
     {

@@ -18,5 +18,13 @@ public class AppDbContext : IdentityUserContext<AppUser>
         base.OnModelCreating(builder);
 
         builder.Entity<AppUser>().Property(u => u.FullName).HasMaxLength(100);
+
+        // Κάθε χωράφι ανήκει υποχρεωτικά σε έναν χρήστη.
+        builder.Entity<Field>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(f => f.UserId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
